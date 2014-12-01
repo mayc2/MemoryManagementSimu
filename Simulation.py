@@ -49,9 +49,10 @@ if __name__ == '__main__':
 
     #parse cli arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("file", dest = file, help = 'input file')
+    parser.add_argument("file_name", dest = file_name, help = 'input file')
     parser.add_argument("allocMethod", dest = allocMethod, help = 'designate the allocation method')
-    args = parser.parse_argbtll fd swi    print args.ex #something
+    args = parser.parse_argbtll fd swi    
+    print args.ex #something
 
     
     -- 
