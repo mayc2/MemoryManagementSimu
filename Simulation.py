@@ -37,6 +37,8 @@ class MainMemorySimulator(object):
         self.memFrames = ""                 # String Representation of Memory
         self.numMemFrames = 1600            # Total amount of space (memFrames size)
         self.numOpSysProc = 80              # Number of spaces in Memory Representation dedicated to op sys processes
+        self.change = False
+        self.t = 0
 
         # Finding all processes that start at 0
         for p in processList:
@@ -45,8 +47,10 @@ class MainMemorySimulator(object):
                 if free_check:
                     tSize = p.reqMemFrames + begin
                     p.memLoc = ( begin, tSize )
-                    if tSize > 0:
+                    print self.freeSpace
+                    if ( end - tSize ) > 0:
                         self.freeSpace.append( (tSize,end) )
+                    print self.freeSpace
                     self.runningProcesses.append(p) # and adding them to runningProcesses list
                     self.free_sort()
                     self.remove_entry_time( p )
@@ -69,6 +73,7 @@ class MainMemorySimulator(object):
 
     #finds first available free space
     def find_first_free_space( self, reqMemFrames ):
+        print str(reqMemFrames) + " " + str(self.freeSpace)
         for space in self.freeSpace:
             if ( space[1] - space[0] ) >= reqMemFrames:
                 self.freeSpace.remove(space)
@@ -119,8 +124,6 @@ class MainMemorySimulator(object):
     #run iterations
     def run(self, quiet_mode, alloc_method):
         while self.simTime <= self.lastTime:
-            change = False
-            t = 0
             if not quiet_mode:
                 #get time, t, input from user
                 pass
@@ -140,18 +143,20 @@ class MainMemorySimulator(object):
                         self.select_n_cal( alloc_method, p )
 
             #prints at time requested or on every change for quiet_mode
-            if quiet_mode and change:
+            if quiet_mode and self.change:
+                self.change = False
                 self.printMemory()
-            elif self.simTime == t:
+            elif self.simTime == self.t:
                 self.printMemory()
 
     #defragment memory if free blocks don't allow allocation
     def defragment(self):
-        pass
+        return False
 
     #deallocates a proces from memory
     def deallocate(self, aProcess):
-        self.remove_exit_time( aProcess )
+        # self.remove_exit_time( aProcess )
+        pass
 
     #selects the proper algorithm based on command line argument
     def select_n_cal(self, alloc_method, aProcess):
@@ -169,6 +174,8 @@ class MainMemorySimulator(object):
         if fTime != self.remove_entry_time( aProcess ):
             print "ERROR: Removed Wrong arrival time from process " + aProcess.name
             sys.exit()
+        else:
+            self.change = True
 
     #removes entry time from process list after process has been added to memory
     def remove_entry_time(self, aProcess):
@@ -191,8 +198,27 @@ class MainMemorySimulator(object):
     #implements First-Fit Memory Allocation Algorithm
     def exec_first(self, aProcess):
         print "gets here at time " + str(self.simTime)
-        pass
 
+        n = 0
+        while n < 2: 
+            print "n is "+ str(n)
+            (free_check, begin, end) = self.find_first_free_space( aProcess.reqMemFrames )
+            if free_check:
+                tSize = aProcess.reqMemFrames + begin
+                aProcess.memLoc = ( begin, tSize )
+                if ( end - tSize ) > 0:
+                    self.freeSpace.append( (tSize,end) )
+                self.runningProcesses.append( aProcess ) # and adding them to runningProcesses list
+                self.free_sort()
+                self.remove_entry_time( aProcess )
+                n = 2
+            elif n == 0:
+                self.defragment()
+                n += 1
+            else:
+                print "ERROR: OUT-OF-MEMORY"
+                sys.exit()
+    
     #implements Best-Fit Memory Allocation Algorithm
     def exec_best(self, aProcess):
         pass
