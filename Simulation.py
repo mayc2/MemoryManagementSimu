@@ -4,14 +4,14 @@ import sys
 class Process(object):
     """docstring for Process"""
     def __init__(self, processArgs):
-        if len(processList) < 4:                        # Process wasn't provided at least a name, req frames
+        if len(processArgs) < 4:                        # Process wasn't provided at least a name, req frames
             print "Error Initializing Process!"         #   and one set of arrival and exit times
             print "Not Enough Arguments..."
             return
             
         self.name = processArgs[0]                      # Process Name
-        self.reqMemFrames = processArgs[1]              # Process Size
-        self.arrivalAndExitTimes = processArgs[2:]      # List of arrival and exit times
+        self.reqMemFrames = int(processArgs[1])              # Process Size
+        self.arrivalAndExitTimes = [ int(x) for x in processArgs[2:] ]     # List of arrival and exit times
 
 class MainMemorySimulator(object):
     """docstring for MainMemory"""
@@ -38,16 +38,16 @@ class MainMemorySimulator(object):
 
         while memFrameItr < self.numMemFrames:      # Fill in each spot of memory representation
             if runningProcessListItr < len(self.runningProcesses): # If there are running processes
-                self.memFrames += self.processes[processListItr].name # Add process name to mem rep
-                inProcFrameItr++                                        # Move to next frame in process
-                if inProcFrameItr > self.processes[processListItr].reqMemFrames: # If process needs no more frames
-                    processListItr++                # Move to next process
+                self.memFrames += self.processes[runningProcessListItr].name # Add process name to mem rep
+                inProcFrameItr += 1                                        # Move to next frame in process
+                if inProcFrameItr > self.processes[runningProcessListItr].reqMemFrames: # If process needs no more frames
+                    runningProcessListItr += 1                # Move to next process
                     inProcFrameItr = 1              # Reset in process index handler
             else:                                   # If no more processes need to be added
                 roomLeft = True                     # Indicate there is no overflow issue
                 self.memFrames += "."               # Indicate free memory spots
             
-             memFrameItr++
+            memFrameItr += 1
         
         if not roomLeft:                            # State there is an overflow issue
             print "ERROR: OUT-OF-MEMORY"
@@ -115,9 +115,18 @@ if __name__ == '__main__':
     #parse cli arguments
     (quiet_mode, file_name, alloc_method) = parse(sys.argv)
 
-    print quiet_mode
-    print file_name
-    print alloc_method
+    #Creating Processes and populating list
+    processList = []
+    with open(file_name, "r") as in_file:
+        for line in in_file:
+            line = line.split()
+            if len(line) > 1:
+                processList.append(Process(line))
+
+    #Initializing MainMemorySimulator
+    M = MainMemorySimulator(processList)
+
+
     # -- 
     #     -- read user processes from in-file 
     #     -- get type of memory allocation algorithm to use
