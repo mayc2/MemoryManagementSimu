@@ -43,6 +43,7 @@ class MainMemorySimulator(object):
                     if tSize > 0:
                         self.freeSpace.append( (tSize,end) )
                     self.runningProcesses.append(p) # and adding them to runningProcesses list
+                    self.free_sort()
                 else:
                     print "ERROR: OUT-OF-MEMORY"
                     sys.exit()
@@ -77,6 +78,12 @@ class MainMemorySimulator(object):
 
         self.printMemory()                          # Print the structure
     
+    def getkey(self, tuple1):
+        return tuple1[0]
+
+    #resort freeSpace List to be in order after appending
+    def free_sort(self):
+        sorted( self.freeSpace, key=self.getkey )
 
     #finds first available free space
     def find_first_free_space( self, reqMemFrames ):
@@ -100,8 +107,6 @@ class MainMemorySimulator(object):
         for m in printList:
             print m
 
-        print self.freeSpace
-
     def incrementTime(self):
         self.simTime += 1
 
@@ -115,7 +120,7 @@ class MainMemorySimulator(object):
 
             #increment time
             self.incrementTime()
-            print "time incremented to " + str(self.simTime)
+            # print "time incremented to " + str(self.simTime)
 
             #check for exiting processes
             for p in self.processes:
