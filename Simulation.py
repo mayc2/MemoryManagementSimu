@@ -98,6 +98,16 @@ class MainMemorySimulator(object):
             #check for exiting processes
 
             #check for entering processes
+            if alloc_method == "first":
+                self.exec_first()
+            elif alloc_method == "best":
+                self.exec_best()
+            elif alloc_method == "next":
+                self.exec_next()
+            elif alloc_method == "worst":
+                self.exec_worst()
+            elif alloc_method == "noncontig":
+                self.exec_noncontig()
 
             #prints at time requested or on every change for quiet_mode
             if quiet_mode and change:
@@ -105,6 +115,20 @@ class MainMemorySimulator(object):
             elif self.simTime == t:
                 self.printMemory()
 
+    def exec_first(self):
+        pass
+
+    def exec_best(self):
+        pass
+
+    def exec_next(self):
+        pass
+
+    def exec_worst(self):
+        pass
+
+    def exec_noncontig(self):
+        pass
 
 def check_filename(file_name):
     if file_name[len(file_name) - 4:] == ".txt":
