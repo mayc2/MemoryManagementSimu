@@ -36,7 +36,17 @@ class MainMemorySimulator(object):
 
         for p in processList:                   # Finding all processes that start at 0
             if p.arrivalTimes[0] == 0:
-                self.runningProcesses.append(p) # and adding them to runningProcesses list
+                (free_check, begin, end) = self.find_first_free_space( p.reqMemFrames )
+                if free_check:
+                    #TO-DO: sort
+                    tSize = p.reqMemFrames + begin
+                    if tSize > 0:
+                        self.freeSpace.append( (tSize,end) )
+                    self.runningProcesses.append(p) # and adding them to runningProcesses list
+                else:
+                    print "ERROR: OUT-OF-MEMORY"
+                    sys.exit()
+
             for et in p.exitTimes:
                 if et > self.lastTime:
                     self.lastTime = et
@@ -67,6 +77,15 @@ class MainMemorySimulator(object):
 
         self.printMemory()                          # Print the structure
     
+
+    #finds first available free space
+    def find_first_free_space( self, reqMemFrames ):
+        for space in self.freeSpace:
+            if ( space[1] - space[0] ) >= reqMemFrames:
+                self.freeSpace.remove(space)
+                return ( True, space[0], space[1] )
+        return ( False, 0 , 0 )
+
     def printMemory(self):
         print "Memory at time %d" %self.simTime
         i = 0
@@ -80,6 +99,8 @@ class MainMemorySimulator(object):
 
         for m in printList:
             print m
+
+        print self.freeSpace
 
     def incrementTime(self):
         self.simTime += 1
