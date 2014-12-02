@@ -11,7 +11,15 @@ class Process(object):
             
         self.name = processArgs[0]                      # Process Name
         self.reqMemFrames = int(processArgs[1])              # Process Size
-        self.arrivalAndExitTimes = [ int(x) for x in processArgs[2:] ]      # List of arrival and exit times
+        self.arrivalTimes = []
+        self.exitTimes = []
+        i = 0
+        for x in processArgs[2:]:                   # List of arrival and exit times
+            if i%2 == 0:
+                self.arrivalTimes.append(int(x))
+            else:
+                self.exitTimes.append(int(x))
+            i += 1
 
 class MainMemorySimulator(object):
     """docstring for MainMemory"""
@@ -26,8 +34,11 @@ class MainMemorySimulator(object):
                                             #   dedicated to op sys processes
         
         for p in processList:                   # Finding all processes that start at 0
-            if p.arrivalAndExitTimes[0] == 0:
+            if p.arrivalTimes[0] == 0:
                 self.runningProcesses.append(p) # and adding them to runningProcesses list
+            for et in p.exitTimes:
+                if et > self.lastTime:
+                    self.lastTime = et
 
         runningProcessListItr = 0           # Index handler for running processes
         inProcFrameItr = 1                  # Index handler for each frame in a process
@@ -74,8 +85,25 @@ class MainMemorySimulator(object):
 
     def run(self, quiet_mode, alloc_method):
         while self.simTime <= self.lastTime:
-            print "incrementing time"
+            change = False
+            t = 0
+            if not quiet_mode:
+                #get time, t, input from user
+                pass
+
+            #increment time
             self.incrementTime()
+            print "time incremented to " + str(self.simTime)
+
+            #check for exiting processes
+
+            #check for entering processes
+
+            #prints at time requested or on every change for quiet_mode
+            if quiet_mode and change:
+                self.printMemory()
+            elif self.simTime == t:
+                self.printMemory()
 
 
 def check_filename(file_name):
