@@ -27,12 +27,13 @@ class MainMemorySimulator(object):
         self.simTime = 0                    # Master Time Handler
         self.lastTime = 0                   # Time that last process exits
         self.processes = processList        # Master List of all Processes
+        self.freeSpace = [(0,1600)]                 # List of tuples of start and end of free space
         self.runningProcesses = []          # List of Processes currently running
         self.memFrames = ""                 # String Representation of Memory
         self.numMemFrames = 1600            # Total amount of space (memFrames size)
         self.numOpSysProc = 80              # Number of spaces in Memory Representation
                                             #   dedicated to op sys processes
-        
+
         for p in processList:                   # Finding all processes that start at 0
             if p.arrivalTimes[0] == 0:
                 self.runningProcesses.append(p) # and adding them to runningProcesses list
@@ -96,24 +97,38 @@ class MainMemorySimulator(object):
             print "time incremented to " + str(self.simTime)
 
             #check for exiting processes
+            for p in self.processes:
+                if p.exitTimes[0] == self.simTime:
+                    self.deallocate(p)
 
             #check for entering processes
-            if alloc_method == "first":
-                self.exec_first()
-            elif alloc_method == "best":
-                self.exec_best()
-            elif alloc_method == "next":
-                self.exec_next()
-            elif alloc_method == "worst":
-                self.exec_worst()
-            elif alloc_method == "noncontig":
-                self.exec_noncontig()
+            for p in self.processes:
+                if p.arrivalTimes[0] == self.simTime:
+                    self.select_n_cal( alloc_method, p )
 
             #prints at time requested or on every change for quiet_mode
             if quiet_mode and change:
                 self.printMemory()
             elif self.simTime == t:
                 self.printMemory()
+
+    def defragment(self):
+        pass
+
+    def deallocate(self, aProcess):
+        pass
+
+    def select_n_cal(self, alloc_method, aProcess):
+        if alloc_method == "first":
+            self.exec_first()
+        elif alloc_method == "best":
+            self.exec_best()
+        elif alloc_method == "next":
+            self.exec_next()
+        elif alloc_method == "worst":
+            self.exec_worst()
+        elif alloc_method == "noncontig":
+            self.exec_noncontig()        
 
     def exec_first(self):
         pass
