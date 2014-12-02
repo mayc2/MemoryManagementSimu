@@ -11,8 +11,12 @@ class Process(object):
             
         self.name = processArgs[0]                      # Process Name
         self.reqMemFrames = int(processArgs[1])              # Process Size
+        self.memLoc = (0,0)
         self.arrivalTimes = []
         self.exitTimes = []
+        self.done = False
+        self.removed = False
+
         i = 0
         for x in processArgs[2:]:                   # List of arrival and exit times
             if i%2 == 0:
@@ -27,7 +31,7 @@ class MainMemorySimulator(object):
         self.simTime = 0                    # Master Time Handler
         self.lastTime = 0                   # Time that last process exits
         self.processes = processList        # Master List of all Processes
-        self.freeSpace = [(0,1600)]                 # List of tuples of start and end of free space
+        self.freeSpace = [(80,1600)]                 # List of tuples of start and end of free space
         self.runningProcesses = []          # List of Processes currently running
         self.memFrames = ""                 # String Representation of Memory
         self.numMemFrames = 1600            # Total amount of space (memFrames size)
@@ -40,10 +44,12 @@ class MainMemorySimulator(object):
                 if free_check:
                     #TO-DO: sort
                     tSize = p.reqMemFrames + begin
+                    p.memLoc = ( begin, tSize )
                     if tSize > 0:
                         self.freeSpace.append( (tSize,end) )
                     self.runningProcesses.append(p) # and adding them to runningProcesses list
                     self.free_sort()
+                    self.remove_entry_time( p )
                 else:
                     print "ERROR: OUT-OF-MEMORY"
                     sys.exit()
@@ -51,30 +57,6 @@ class MainMemorySimulator(object):
             for et in p.exitTimes:
                 if et > self.lastTime:
                     self.lastTime = et
-
-        runningProcessListItr = 0           # Index handler for running processes
-        inProcFrameItr = 1                  # Index handler for each frame in a process
-        roomLeft = False                    # Bool to check for memory overflow
-        memFrameItr = self.numOpSysProc     # Master index handler for memory representation
-
-        for i in range(0, self.numOpSysProc):   # Adding Operating System Frames to beginning
-            self.memFrames += "#"
-
-        while memFrameItr < self.numMemFrames:      # Fill in each spot of memory representation
-            if runningProcessListItr < len(self.runningProcesses): # If there are running processes
-                self.memFrames += self.processes[runningProcessListItr].name # Add process name to mem rep
-                inProcFrameItr += 1                                        # Move to next frame in process
-                if inProcFrameItr > self.processes[runningProcessListItr].reqMemFrames: # If process needs no more frames
-                    runningProcessListItr += 1               # Move to next process
-                    inProcFrameItr = 1              # Reset in process index handler
-            else:                                   # If no more processes need to be added
-                roomLeft = True                     # Indicate there is no overflow issue
-                self.memFrames += "."               # Indicate free memory spots
-            
-            memFrameItr += 1
-        
-        if not roomLeft:                            # State there is an overflow issue
-            print "ERROR: OUT-OF-MEMORY"
 
         self.printMemory()                          # Print the structure
     
@@ -94,6 +76,25 @@ class MainMemorySimulator(object):
         return ( False, 0 , 0 )
 
     def printMemory(self):
+        self.memFrames = ""
+        memFrameItr = self.numOpSysProc     # Master index handler for memory representation
+        temp_processes = self.processes
+
+        for i in range(0, self.numOpSysProc):   # Adding Operating System Frames to beginning
+            self.memFrames += "#"
+
+        while memFrameItr < self.numMemFrames:      # Fill in each spot of memory representation
+            for p in self.runningProcesses:
+                if memFrameItr == p.memLoc[0]:
+                    while memFrameItr < p.memLoc[1]:
+                        self.memFrames += p.name
+                        memFrameItr += 1
+            for space in self.freeSpace:
+                if space[0] == memFrameItr:
+                    while memFrameItr < space[1]:
+                        self.memFrames += "."
+                        memFrameItr += 1
+
         print "Memory at time %d" %self.simTime
         i = 0
         printList = []
@@ -123,14 +124,17 @@ class MainMemorySimulator(object):
             # print "time incremented to " + str(self.simTime)
 
             #check for exiting processes
+            #NOTE: p.done check, if True remove process from processes list
             for p in self.processes:
-                if p.exitTimes[0] == self.simTime:
-                    self.deallocate(p)
+                if not p.removed:
+                    if p.exitTimes[0] == self.simTime:
+                        self.deallocate(p)
 
             #check for entering processes
             for p in self.processes:
-                if p.arrivalTimes[0] == self.simTime:
-                    self.select_n_cal( alloc_method, p )
+                if not p.done:
+                    if p.arrivalTimes[0] == self.simTime:
+                        self.select_n_cal( alloc_method, p )
 
             #prints at time requested or on every change for quiet_mode
             if quiet_mode and change:
@@ -142,33 +146,53 @@ class MainMemorySimulator(object):
         pass
 
     def deallocate(self, aProcess):
-        pass
+        self.remove_exit_time( aProcess )
 
     def select_n_cal(self, alloc_method, aProcess):
         if alloc_method == "first":
-            self.exec_first()
+            self.exec_first( aProcess )
         elif alloc_method == "best":
-            self.exec_best()
+            self.exec_best( aProcess )
         elif alloc_method == "next":
-            self.exec_next()
+            self.exec_next( aProcess )
         elif alloc_method == "worst":
-            self.exec_worst()
+            self.exec_worst( aProcess )
         elif alloc_method == "noncontig":
-            self.exec_noncontig()        
+            self.exec_noncontig( aProcess ) 
+        fTime = aProcess.arrivalTimes[0]
+        if fTime != self.remove_entry_time( aProcess ):
+            print "ERROR: Removed Wrong arrival time from process " + aProcess.name
+            sys.exit()
 
-    def exec_first(self):
+    def remove_entry_time(self, aProcess):
+        if len(aProcess.arrivalTimes) == 1:
+            aProcess.done = True
+        index = self.processes.index( aProcess )
+        return self.processes[index].arrivalTimes.pop(0)
+
+    def remove_exit_time(self, aProcess):
+        if aProcess.done == True:
+            i = self.processes.index( aProcess )
+            self.processes.pop( i )
+        else:
+            index = self.processes.index( aProcess )
+            self.processes[index].exitTimes.pop(0)
+            aProcess.memLoc = ( 0, 0 )
+
+    def exec_first(self, aProcess):
+        print "gets here at time " + str(self.simTime)
         pass
 
-    def exec_best(self):
+    def exec_best(self, aProcess):
         pass
 
-    def exec_next(self):
+    def exec_next(self, aProcess):
         pass
 
-    def exec_worst(self):
+    def exec_worst(self, aProcess):
         pass
 
-    def exec_noncontig(self):
+    def exec_noncontig(self, aProcess):
         pass
 
 def check_filename(file_name):
