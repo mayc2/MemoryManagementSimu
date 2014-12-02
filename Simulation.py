@@ -1,6 +1,7 @@
 #Memory Management Simulation System
 import sys
 
+#PROCESS CLASS
 class Process(object):
     """docstring for Process"""
     def __init__(self, processArgs):
@@ -10,12 +11,11 @@ class Process(object):
             return
             
         self.name = processArgs[0]                      # Process Name
-        self.reqMemFrames = int(processArgs[1])              # Process Size
-        self.memLoc = (0,0)
-        self.arrivalTimes = []
-        self.exitTimes = []
-        self.done = False
-        self.removed = False
+        self.reqMemFrames = int(processArgs[1])         # Process Size
+        self.memLoc = (0,0)                             # location if allocated, else (0,0)
+        self.arrivalTimes = []                          # list of arrival times, in order
+        self.exitTimes = []                             # list of exit times, in order
+        self.done = False                               # True if last arrival time has occurred (note still needs to exit and be removed)
 
         i = 0
         for x in processArgs[2:]:                   # List of arrival and exit times
@@ -25,24 +25,24 @@ class Process(object):
                 self.exitTimes.append(int(x))
             i += 1
 
+#MEMORY SIMULATION CLASS
 class MainMemorySimulator(object):
     """docstring for MainMemory"""
     def __init__(self, processList):
         self.simTime = 0                    # Master Time Handler
         self.lastTime = 0                   # Time that last process exits
         self.processes = processList        # Master List of all Processes
-        self.freeSpace = [(80,1600)]                 # List of tuples of start and end of free space
+        self.freeSpace = [(80,1600)]        # List of tuples of start and end of free space
         self.runningProcesses = []          # List of Processes currently running
         self.memFrames = ""                 # String Representation of Memory
         self.numMemFrames = 1600            # Total amount of space (memFrames size)
-        self.numOpSysProc = 80              # Number of spaces in Memory Representation
-                                            #   dedicated to op sys processes
+        self.numOpSysProc = 80              # Number of spaces in Memory Representation dedicated to op sys processes
 
-        for p in processList:                   # Finding all processes that start at 0
+        # Finding all processes that start at 0
+        for p in processList:
             if p.arrivalTimes[0] == 0:
                 (free_check, begin, end) = self.find_first_free_space( p.reqMemFrames )
                 if free_check:
-                    #TO-DO: sort
                     tSize = p.reqMemFrames + begin
                     p.memLoc = ( begin, tSize )
                     if tSize > 0:
@@ -75,26 +75,31 @@ class MainMemorySimulator(object):
                 return ( True, space[0], space[1] )
         return ( False, 0 , 0 )
 
+    #scans through runnning processes and prints
     def printMemory(self):
-        self.memFrames = ""
+        self.memFrames = ""                 #output string
         memFrameItr = self.numOpSysProc     # Master index handler for memory representation
-        temp_processes = self.processes
+        temp_processes = self.runningProcesses
+        temp_space = self.freeSpace
 
         for i in range(0, self.numOpSysProc):   # Adding Operating System Frames to beginning
             self.memFrames += "#"
 
         while memFrameItr < self.numMemFrames:      # Fill in each spot of memory representation
-            for p in self.runningProcesses:
+            for p in temp_processes:
                 if memFrameItr == p.memLoc[0]:
                     while memFrameItr < p.memLoc[1]:
                         self.memFrames += p.name
                         memFrameItr += 1
-            for space in self.freeSpace:
+                    temp_processes.remove( p )
+            for space in temp_space:
                 if space[0] == memFrameItr:
                     while memFrameItr < space[1]:
                         self.memFrames += "."
                         memFrameItr += 1
+                    temp_space.remove( space )
 
+        #printing set string of memory from above in correct format            
         print "Memory at time %d" %self.simTime
         i = 0
         printList = []
@@ -111,6 +116,7 @@ class MainMemorySimulator(object):
     def incrementTime(self):
         self.simTime += 1
 
+    #run iterations
     def run(self, quiet_mode, alloc_method):
         while self.simTime <= self.lastTime:
             change = False
@@ -121,16 +127,13 @@ class MainMemorySimulator(object):
 
             #increment time
             self.incrementTime()
-            # print "time incremented to " + str(self.simTime)
 
-            #check for exiting processes
-            #NOTE: p.done check, if True remove process from processes list
+            #check for exiting processes + deallocate if found
             for p in self.processes:
-                if not p.removed:
-                    if p.exitTimes[0] == self.simTime:
-                        self.deallocate(p)
+                if p.exitTimes[0] == self.simTime:
+                    self.deallocate(p)
 
-            #check for entering processes
+            #check for entering processes + allocate if found
             for p in self.processes:
                 if not p.done:
                     if p.arrivalTimes[0] == self.simTime:
@@ -142,12 +145,15 @@ class MainMemorySimulator(object):
             elif self.simTime == t:
                 self.printMemory()
 
+    #defragment memory if free blocks don't allow allocation
     def defragment(self):
         pass
 
+    #deallocates a proces from memory
     def deallocate(self, aProcess):
         self.remove_exit_time( aProcess )
 
+    #selects the proper algorithm based on command line argument
     def select_n_cal(self, alloc_method, aProcess):
         if alloc_method == "first":
             self.exec_first( aProcess )
@@ -164,12 +170,15 @@ class MainMemorySimulator(object):
             print "ERROR: Removed Wrong arrival time from process " + aProcess.name
             sys.exit()
 
+    #removes entry time from process list after process has been added to memory
     def remove_entry_time(self, aProcess):
         if len(aProcess.arrivalTimes) == 1:
             aProcess.done = True
         index = self.processes.index( aProcess )
         return self.processes[index].arrivalTimes.pop(0)
 
+    #removes a exit time from process list after process leaves memory
+    #if last exit time, it removes process from processes
     def remove_exit_time(self, aProcess):
         if aProcess.done == True:
             i = self.processes.index( aProcess )
@@ -179,21 +188,30 @@ class MainMemorySimulator(object):
             self.processes[index].exitTimes.pop(0)
             aProcess.memLoc = ( 0, 0 )
 
+    #implements First-Fit Memory Allocation Algorithm
     def exec_first(self, aProcess):
         print "gets here at time " + str(self.simTime)
         pass
 
+    #implements Best-Fit Memory Allocation Algorithm
     def exec_best(self, aProcess):
         pass
 
+    #implements Next-Fit Memory Allocation Algorithm
     def exec_next(self, aProcess):
         pass
 
+    #implements Worst-Fit Memory Allocation Algorithm
     def exec_worst(self, aProcess):
         pass
 
+    #implements Non-Contiguous Memory Allocation Algorithm
     def exec_noncontig(self, aProcess):
         pass
+
+
+########################    END CLASS   ###########################################################
+
 
 def check_filename(file_name):
     if file_name[len(file_name) - 4:] == ".txt":
@@ -232,7 +250,8 @@ def parse(argv):
         print "USAGE: memsim [-q] <input-file> { first | best | next | worst }"
         sys.exit()
 
-#main function
+#############################     MAIN FUNCTION     #############################################
+
 if __name__ == '__main__':
     #Some Pseudocode
 
