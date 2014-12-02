@@ -43,6 +43,18 @@ import sys
 
 #         self.printMemory()
 
+def check_filename(file_name):
+    if file_name[len(file_name) - 4:] == ".txt":
+        return True
+    return False
+    
+def check_allocmethod(alloc_method):
+    possible = ["first", "best", "next", "worst", "noncontig"]
+    for a in possible:
+        if alloc_method == a:
+            return True
+    return False
+
 def parse(argv):
     #memsim -q <input-file> { first | best | next | worst }
     quiet_mode = False
@@ -62,8 +74,11 @@ def parse(argv):
     else:
         print "USAGE: memsim [-q] <input-file> { first | best | next | worst }"
         sys.exit()
-    return (quiet_mode, file_name, alloc_method)
-
+    if check_allocmethod(alloc_method) and check_filename(file_name):
+        return (quiet_mode, file_name, alloc_method)
+    else:
+        print "USAGE: memsim [-q] <input-file> { first | best | next | worst }"
+        sys.exit()
     
 #main function
 if __name__ == '__main__':
