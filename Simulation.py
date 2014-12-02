@@ -17,6 +17,7 @@ class MainMemorySimulator(object):
     """docstring for MainMemory"""
     def __init__(self, processList):
         self.simTime = 0                    # Master Time Handler
+        self.lastTime = 0                   # Time that last process exits
         self.processes = processList        # Master List of all Processes
         self.runningProcesses = []          # List of Processes currently running
         self.memFrames = ""                 # String Representation of Memory
@@ -27,6 +28,7 @@ class MainMemorySimulator(object):
         for p in processList:                   # Finding all processes that start at 0
             if p.arrivalAndExitTimes[0] == 0:
                 self.runningProcesses.append(p) # and adding them to runningProcesses list
+            elif p.arrivalAndExitTimes
 
         runningProcessListItr = 0           # Index handler for running processes
         inProcFrameItr = 1                  # Index handler for each frame in a process
@@ -58,17 +60,13 @@ class MainMemorySimulator(object):
         print "Memory at time %d" %self.simTime
         print self.memFrames
 
-    def run(self, mode):
-        if (mode == "first"):
-            pass
-        elif (mode == "best"):
-            pass
-        elif (mode == "next"):
-            pass
-        elif (mode == "worst"):
-            pass
-        elif (mode == "noncontig"):
-            pass
+    def incrementTime(self):
+        self.simTime += 1
+
+    def run(self, mode, quiet_mode, alloc_method):
+        while self.simTime <= lastTime:
+            print "incrementing time"
+            self.incrementTime()
 
 
 def check_filename(file_name):
