@@ -32,17 +32,17 @@ class MainMemorySimulator(object):
             if processListItr < len(self.processes):
                 # go trhough each process
             else:
-                roomLeft = true
+                roomLeft = True
                 self.memFrames += "."
             
             memFrameItr++
         
         if not roomLeft:
-            print "Error: Processes require too much memory!"
-    
-        self.printMemory()
-            
+            print "ERROR: OUT-OF-MEMORY"
 
+        self.printMemory()
+    
+#main function
 if __name__ == '__main__':
     bool OUT_OF_MEMORY
     #Some Pseudocode
