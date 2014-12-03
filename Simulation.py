@@ -66,12 +66,18 @@ class MainMemorySimulator(object):
         self.printMemory()                          # Print the structure
         print "TEST2:", self.freeSpace
     
-    def getkey(self, tuple1):
+    def getfreekey(self, tuple1):
         return tuple1[0]
 
     #resort freeSpace List to be in order after appending
     def free_sort(self):
-        sorted( self.freeSpace, key=self.getkey )
+        sorted( self.freeSpace, key=self.getfreekey )
+
+    def getprocesskey(self, aProcess):
+        return aProcess.memLoc[0]
+
+    def processes_sort(self):
+        sorted( self.runningProcesses, key=self.getprocesskey )
 
     #finds first available free space
     def find_first_free_space( self, reqMemFrames ):
@@ -91,6 +97,8 @@ class MainMemorySimulator(object):
 
         for i in range(0, self.numOpSysProc):   # Adding Operating System Frames to beginning
             self.memFrames += "#"
+
+        self.processes_sort()
 
         while memFrameItr < self.numMemFrames:      # Fill in each spot of memory representation
             for p in temp_processes:
