@@ -39,6 +39,7 @@ class MainMemorySimulator(object):
         self.numOpSysProc = 80              # Number of spaces in Memory Representation dedicated to op sys processes
         self.change = False
         self.t = 0
+        self.lastAlloc = 79
 
         # Finding all processes that start at 0
         for p in processList:
@@ -52,6 +53,7 @@ class MainMemorySimulator(object):
                     self.fix_free_space()
                     self.runningProcesses.append(p) # and adding them to runningProcesses list
                     print "Allocated",p.name
+                    self.lastAlloc = p.memLoc[1]
                     self.free_sort()
                     self.remove_entry_time( p )
                 else:
@@ -109,7 +111,23 @@ class MainMemorySimulator(object):
 
     #finds first free space after last allocation
     def find_next_free_space( self, reqMemFrames ):
-        pass
+        n = 0
+        while True:
+            if n == 0:
+                for space in self.freeSpace:
+                    if space[0] > self.lastAlloc: 
+                        if ( space[1] - space[0] + 1) >= reqMemFrames:
+                            self.freeSpace.remove(space)
+                            return ( True, space[0], space[1] )
+                n += 1
+            elif n == 1:
+                for space in self.freeSpace:
+                    if ( space[1] - space[0] + 1) >= reqMemFrames:
+                        self.freeSpace.remove(space)
+                        return ( True, space[0], space[1] )
+                n += 1
+            else:
+                return ( False, 0 , 0 )
 
     #finds largest available free space
     def find_worst_free_space( self, reqMemFrames ):
@@ -401,6 +419,7 @@ class MainMemorySimulator(object):
         print "next:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)
 
         n = 0
+
         while n < 2: 
             (free_check, begin, end) = self.find_next_free_space( aProcess.reqMemFrames )
             if free_check:
@@ -411,6 +430,7 @@ class MainMemorySimulator(object):
                 self.fix_free_space()
                 self.runningProcesses.append( aProcess ) # and adding them to runningProcesses list
                 print "Allocated",aProcess.name
+                self.lastAlloc = aProcess.memLoc[1]
                 self.free_sort()
                 self.remove_entry_time( aProcess )
                 n = 2
