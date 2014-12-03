@@ -49,6 +49,7 @@ class MainMemorySimulator(object):
                     p.memLoc = ( begin, tSize )
                     if ( end - tSize ) > 0:
                         self.freeSpace.append( (tSize + 1 , end) )
+                    self.fix_free_space()
                     self.runningProcesses.append(p) # and adding them to runningProcesses list
                     self.free_sort()
                     self.remove_entry_time( p )
@@ -62,18 +63,24 @@ class MainMemorySimulator(object):
 
         self.printMemory()                          # Print the structure
     
-    def getfreekey(self, tuple1):
-        return tuple1[0]
-
     #resort freeSpace List to be in order after appending
     def free_sort(self):
-        sorted( self.freeSpace, key=self.getfreekey )
+        self.freeSpace.sort()
 
     def getprocesskey(self, aProcess):
-        return aProcess.memLoc[0]
+        return aProcess.memLoc
 
     def processes_sort(self):
+        # print "ENTER PROCESSES SORT"
+        # before = "BEFORE: "
+        # for p in self.runningProcesses:
+        #     before += p.name + " "
+        # print before
         sorted( self.runningProcesses, key=self.getprocesskey )
+        # after = "AFTER: "
+        # for p in self.runningProcesses:
+        #     after += p.name + " "
+        # print after
 
     #finds first available free space
     def find_first_free_space( self, reqMemFrames ):
@@ -248,7 +255,7 @@ class MainMemorySimulator(object):
 
         self.remove_exit_time( aProcess )
 
-        self.free_sort()
+        self.fix_free_space()
         self.change = True
 
     #selects the proper algorithm based on command line argument
@@ -288,6 +295,23 @@ class MainMemorySimulator(object):
             self.processes[index].exitTimes.pop(0)
             aProcess.memLoc = ( 0, 0 )
 
+    def fix_free_space(self):
+        # print "ENTER SORT"
+        # print "BEFORE:",self.freeSpace
+        self.free_sort()
+        # print "AFTER:",self.freeSpace
+        print self.freeSpace
+        for space in range( 0, len(self.freeSpace) ):
+            if space < (len(self.freeSpace) - 1 ):
+                if self.freeSpace[space][1] == self.freeSpace[space + 1][0]:
+                    begin = self.freeSpace[space][0]
+                    middle = self.freeSpace[space][1]
+                    end = self.freeSpace[space + 1][1]
+                    self.freeSpace.append( (begin, end) )
+                    self.freeSpace.remove( (begin, middle) )
+                    self.freeSpace.remove( (middle, end) )
+        print self.freeSpace
+
     #implements First-Fit Memory Allocation Algorithm
     def exec_first(self, aProcess):
         print "first:",aProcess.name,"gets here at time " + str(self.simTime)
@@ -300,6 +324,7 @@ class MainMemorySimulator(object):
                 aProcess.memLoc = ( begin, tSize )
                 if ( end - tSize ) > 0:
                     self.freeSpace.append( (tSize + 1 , end) )
+                self.fix_free_space()
                 self.runningProcesses.append( aProcess ) # and adding them to runningProcesses list
                 self.free_sort()
                 self.remove_entry_time( aProcess )
@@ -333,6 +358,7 @@ class MainMemorySimulator(object):
                 aProcess.memLoc = ( begin, tSize )
                 if ( end - tSize ) > 0:
                     self.freeSpace.append( (tSize + 1 , end) )
+                self.fix_free_space()
                 self.runningProcesses.append( aProcess ) # and adding them to runningProcesses list
                 self.free_sort()
                 self.remove_entry_time( aProcess )
