@@ -161,22 +161,25 @@ class MainMemorySimulator(object):
 
     #defragment memory if free blocks don't allow allocation
     def defragment(self):
-        self.process_sort()
+        self.processes_sort()
         last_spot = 79
         for p in range(0, len(self.runningProcesses)):
             if p == 0:
-                last_spot = self.runningProcceses[0].memLoc[1]
+                last_spot = self.runningProcesses[0].memLoc[1]
                 continue
 
-            while self.runningProcceses[p].memLoc[0] > self.runningProcceses[p - 1].memLoc[1] + 1:
-                self.runningProcesses[p].memLoc[0] -= 1
-                self.runningProcesses[p].memLoc[1] -= 1
+            while self.runningProcesses[p].memLoc[0] > self.runningProcesses[p - 1].memLoc[1] + 1:
+                temp1 = self.runningProcesses[p].memLoc[0] - 1
+                temp2 = self.runningProcesses[p].memLoc[1] - 1
+                self.runningProcesses[p].memLoc = ( temp1, temp2 )
 
-            if self.runningProcceses[p].memLoc[1] > last_spot:
-                last_spot = self.runningProcceses[p].memLoc[1]
-     
+            if self.runningProcesses[p].memLoc[1] > last_spot:
+                last_spot = self.runningProcesses[p].memLoc[1]
+        
         self.freeSpace = [(last_spot + 1, 1599)]
 
+        self.printMemory()
+    
     #deallocates a proces from memory
     def deallocate(self, aProcess):
         self.runningProcesses.remove( aProcess )
