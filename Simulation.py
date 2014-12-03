@@ -165,8 +165,48 @@ class MainMemorySimulator(object):
 
     #deallocates a proces from memory
     def deallocate(self, aProcess):
-        # self.remove_exit_time( aProcess )
-        pass
+        self.runningProcesses.remove( aProcess )
+        
+        begin = aProcess.memLoc[0]
+        end = aProcess.memLoc[1]
+        
+        #handle if blcok being freed is next to current free block
+        check_before = False
+        check_after = False
+        before_tup = ( 0, 0 )
+        after_tup = ( 0 , 0 )
+        for space in self.freeSpace:
+            #block is after free space
+            if space[0] == ( end + 1 ):
+                check_after = True
+                after_tup = space
+            #block is before free space
+            if space[1] == ( begin - 1):
+                check_before = True
+                before_tup = space
+        #if between two free blocks
+        if check_before and check_after:
+            print "BEFORE:",before_tup,"AFTER:",after_tup
+            self.freeSpace.remove( before_tup )
+            self.freeSpace.remove( after_tup )
+            self.freeSpace.append( (before_tup[0], after_tup[1]) )
+        #if only before a free block
+        elif check_before:
+            self.freeSpace.remove( before_tup )
+            self.freeSpace.append( (before_tup[0], end) )
+        #if only after a free block
+        elif check_after:
+            self.freeSpace.remove( after_tup )
+            self.freeSpace.append( (begin,  after_tup[1]) )
+        #else not next to a free block
+        else:
+            self.freeSpace.append( (begin, end) )
+
+        self.remove_exit_time( aProcess )
+
+        self.free_sort()
+        self.change = True
+        print self.simTime,"FREESPACE:",self.freeSpace
 
     #selects the proper algorithm based on command line argument
     def select_n_cal(self, alloc_method, aProcess):
