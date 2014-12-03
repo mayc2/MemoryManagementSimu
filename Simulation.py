@@ -110,7 +110,7 @@ class MainMemorySimulator(object):
                     temp_space.remove( space )
 
         #printing set string of memory from above in correct format            
-        print "Memory at time %d" %self.simTime
+        print "Memory at time %d:" %self.simTime
         i = 0
         printList = []
         while i < self.numMemFrames:
@@ -123,18 +123,25 @@ class MainMemorySimulator(object):
         for m in printList:
             print m
 
+        print ""
+
     def incrementTime(self):
         self.simTime += 1
 
     #run iterations
     def run(self, quiet_mode, alloc_method):
         while self.simTime <= self.lastTime:
-            if not quiet_mode:
-                #get time, t, input from user
-                pass
-
             #increment time
             self.incrementTime()
+
+            if not quiet_mode and self.simTime > self.t:
+                #get time, t, input from user
+                while self.t < self.simTime:
+                    self.t = int(raw_input("Enter next time to view memory (0 to exit) : current time is %d --> " %self.simTime))
+                    if self.t == 0:
+                        sys.exit()
+                    if self.t <self.simTime:
+                        print "Invalid Input: Enter time past current time of %d" %self.simTime
 
             #check for exiting processes + deallocate if found
             for p in self.processes:
@@ -153,6 +160,9 @@ class MainMemorySimulator(object):
                 self.printMemory()
             elif self.simTime == self.t:
                 self.printMemory()
+            elif self.t > self.lastTime and self.simTime == self.lastTime:
+                print "Program Simulation is about to end, printing memory before exiting"
+                self.printMemory() 
 
     #defragment memory if free blocks don't allow allocation
     def defragment(self):
@@ -180,7 +190,8 @@ class MainMemorySimulator(object):
         
         self.freeSpace = [(last_spot + 1, 1599)]
         print "Defragmentation completed."
-        print "Relocated %d processes to create a free memory block of %d units (%.2f" + "%" + " of total memory)." %(processes_moved, 1599 - last_spot, (1599 - last_spot) / 1599)
+        percent = ((1599.00 - last_spot) / 1600.00) * 100
+        print "Relocated", processes_moved, "processes to create a free memory block of", (1599 - last_spot), "units (%.2f%% of total memory).\n" %percent
         self.printMemory()
     
     #deallocates a proces from memory
