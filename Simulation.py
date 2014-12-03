@@ -83,6 +83,20 @@ class MainMemorySimulator(object):
                 return ( True, space[0], space[1] )
         return ( False, 0 , 0 )
 
+    #finds largest available free space
+    def find_worst_free_space( self, reqMemFrames ):
+        diff = 0
+        worst_space = 0
+        for space in self.freeSpace:
+            if (space[1] - space[0]) > diff:
+                diff = space[1] - space[0]
+                worst_space = space
+        
+        if (worst_space[1] - worst_space[0] ) >= reqMemFrames:
+                self.freeSpace.remove(worst_space)
+                return ( True, worst_space[0], worst_space[1] )
+        return ( False, 0 , 0 )
+
     #scans through runnning processes and prints
     def printMemory(self):
         self.memFrames = ""                 #output string
@@ -310,7 +324,25 @@ class MainMemorySimulator(object):
     #implements Worst-Fit Memory Allocation Algorithm
     def exec_worst(self, aProcess):
         print "worst:",aProcess.name,"gets here at time " + str(self.simTime)
-        pass
+
+        n = 0
+        while n < 2: 
+            (free_check, begin, end) = self.find_worst_free_space( aProcess.reqMemFrames )
+            if free_check:
+                tSize = aProcess.reqMemFrames + begin - 1
+                aProcess.memLoc = ( begin, tSize )
+                if ( end - tSize ) > 0:
+                    self.freeSpace.append( (tSize + 1 , end) )
+                self.runningProcesses.append( aProcess ) # and adding them to runningProcesses list
+                self.free_sort()
+                self.remove_entry_time( aProcess )
+                n = 2
+            elif n == 0:
+                self.defragment()
+                n += 1
+            else:
+                print "ERROR: OUT-OF-MEMORY"
+                sys.exit()
 
     #implements Non-Contiguous Memory Allocation Algorithm
     def exec_noncontig(self, aProcess):
