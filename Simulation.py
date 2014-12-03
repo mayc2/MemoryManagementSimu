@@ -47,11 +47,8 @@ class MainMemorySimulator(object):
                 if free_check:
                     tSize = p.reqMemFrames + begin - 1
                     p.memLoc = ( begin, tSize )
-                    print "CHECK MEM:",p.memLoc,end
-                    print self.freeSpace
                     if ( end - tSize ) > 0:
                         self.freeSpace.append( (tSize + 1 , end) )
-                    print self.freeSpace
                     self.runningProcesses.append(p) # and adding them to runningProcesses list
                     self.free_sort()
                     self.remove_entry_time( p )
@@ -64,7 +61,6 @@ class MainMemorySimulator(object):
                     self.lastTime = et
 
         self.printMemory()                          # Print the structure
-        print "TEST2:", self.freeSpace
     
     def getfreekey(self, tuple1):
         return tuple1[0]
@@ -81,7 +77,6 @@ class MainMemorySimulator(object):
 
     #finds first available free space
     def find_first_free_space( self, reqMemFrames ):
-        print str(reqMemFrames) + " " + str(self.freeSpace)
         for space in self.freeSpace:
             if ( space[1] - space[0] ) >= reqMemFrames:
                 self.freeSpace.remove(space)
@@ -203,7 +198,6 @@ class MainMemorySimulator(object):
                 before_tup = space
         #if between two free blocks
         if check_before and check_after:
-            print "BEFORE:",before_tup,"AFTER:",after_tup
             self.freeSpace.remove( before_tup )
             self.freeSpace.remove( after_tup )
             self.freeSpace.append( (before_tup[0], after_tup[1]) )
@@ -223,7 +217,6 @@ class MainMemorySimulator(object):
 
         self.free_sort()
         self.change = True
-        print self.simTime,"FREESPACE:",self.freeSpace
 
     #selects the proper algorithm based on command line argument
     def select_n_cal(self, alloc_method, aProcess):
@@ -264,11 +257,10 @@ class MainMemorySimulator(object):
 
     #implements First-Fit Memory Allocation Algorithm
     def exec_first(self, aProcess):
-        print aProcess.name,"gets here at time " + str(self.simTime)
+        print "first:",aProcess.name,"gets here at time " + str(self.simTime)
 
         n = 0
         while n < 2: 
-            print "n is "+ str(n)
             (free_check, begin, end) = self.find_first_free_space( aProcess.reqMemFrames )
             if free_check:
                 tSize = aProcess.reqMemFrames + begin - 1
@@ -288,18 +280,22 @@ class MainMemorySimulator(object):
     
     #implements Best-Fit Memory Allocation Algorithm
     def exec_best(self, aProcess):
+        print "best:",aProcess.name,"gets here at time " + str(self.simTime)
         pass
 
     #implements Next-Fit Memory Allocation Algorithm
     def exec_next(self, aProcess):
+        print "next:",aProcess.name,"gets here at time " + str(self.simTime)
         pass
 
     #implements Worst-Fit Memory Allocation Algorithm
     def exec_worst(self, aProcess):
+        print "worst:",aProcess.name,"gets here at time " + str(self.simTime)
         pass
 
     #implements Non-Contiguous Memory Allocation Algorithm
     def exec_noncontig(self, aProcess):
+        print "noncontig:",aProcess.name,"gets here at time " + str(self.simTime)
         pass
 
 
