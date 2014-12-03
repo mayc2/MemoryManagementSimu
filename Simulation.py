@@ -32,7 +32,7 @@ class MainMemorySimulator(object):
         self.simTime = 0                    # Master Time Handler
         self.lastTime = 0                   # Time that last process exits
         self.processes = processList        # Master List of all Processes
-        self.freeSpace = [(80,1600)]        # List of tuples of start and end of free space
+        self.freeSpace = [(80,1599)]        # List of tuples of start and end of free space
         self.runningProcesses = []          # List of Processes currently running
         self.memFrames = ""                 # String Representation of Memory
         self.numMemFrames = 1600            # Total amount of space (memFrames size)
@@ -45,11 +45,12 @@ class MainMemorySimulator(object):
             if p.arrivalTimes[0] == 0:
                 (free_check, begin, end) = self.find_first_free_space( p.reqMemFrames )
                 if free_check:
-                    tSize = p.reqMemFrames + begin
+                    tSize = p.reqMemFrames + begin - 1
                     p.memLoc = ( begin, tSize )
+                    print "CHECK MEM:",p.memLoc,end
                     print self.freeSpace
                     if ( end - tSize ) > 0:
-                        self.freeSpace.append( (tSize,end) )
+                        self.freeSpace.append( (tSize + 1 , end) )
                     print self.freeSpace
                     self.runningProcesses.append(p) # and adding them to runningProcesses list
                     self.free_sort()
@@ -63,6 +64,7 @@ class MainMemorySimulator(object):
                     self.lastTime = et
 
         self.printMemory()                          # Print the structure
+        print "TEST2:", self.freeSpace
     
     def getkey(self, tuple1):
         return tuple1[0]
@@ -84,8 +86,8 @@ class MainMemorySimulator(object):
     def printMemory(self):
         self.memFrames = ""                 #output string
         memFrameItr = self.numOpSysProc     # Master index handler for memory representation
-        temp_processes = self.runningProcesses
-        temp_space = self.freeSpace
+        temp_processes = list(self.runningProcesses)
+        temp_space = list(self.freeSpace)
 
         for i in range(0, self.numOpSysProc):   # Adding Operating System Frames to beginning
             self.memFrames += "#"
@@ -93,13 +95,13 @@ class MainMemorySimulator(object):
         while memFrameItr < self.numMemFrames:      # Fill in each spot of memory representation
             for p in temp_processes:
                 if memFrameItr == p.memLoc[0]:
-                    while memFrameItr < p.memLoc[1]:
+                    while memFrameItr <= p.memLoc[1]:
                         self.memFrames += p.name
                         memFrameItr += 1
                     temp_processes.remove( p )
             for space in temp_space:
                 if space[0] == memFrameItr:
-                    while memFrameItr < space[1]:
+                    while memFrameItr <= space[1]:
                         self.memFrames += "."
                         memFrameItr += 1
                     temp_space.remove( space )
@@ -170,12 +172,12 @@ class MainMemorySimulator(object):
             self.exec_worst( aProcess )
         elif alloc_method == "noncontig":
             self.exec_noncontig( aProcess ) 
-        fTime = aProcess.arrivalTimes[0]
-        if fTime != self.remove_entry_time( aProcess ):
-            print "ERROR: Removed Wrong arrival time from process " + aProcess.name
-            sys.exit()
-        else:
-            self.change = True
+        # fTime = aProcess.arrivalTimes[0]
+        # if fTime != self.remove_entry_time( aProcess ):
+            # print "ERROR: Removed Wrong arrival time from process " + aProcess.name
+            # sys.exit()
+        # else:
+        self.change = True
 
     #removes entry time from process list after process has been added to memory
     def remove_entry_time(self, aProcess):
@@ -197,17 +199,17 @@ class MainMemorySimulator(object):
 
     #implements First-Fit Memory Allocation Algorithm
     def exec_first(self, aProcess):
-        print "gets here at time " + str(self.simTime)
+        print aProcess.name,"gets here at time " + str(self.simTime)
 
         n = 0
         while n < 2: 
             print "n is "+ str(n)
             (free_check, begin, end) = self.find_first_free_space( aProcess.reqMemFrames )
             if free_check:
-                tSize = aProcess.reqMemFrames + begin
+                tSize = aProcess.reqMemFrames + begin - 1
                 aProcess.memLoc = ( begin, tSize )
                 if ( end - tSize ) > 0:
-                    self.freeSpace.append( (tSize,end) )
+                    self.freeSpace.append( (tSize + 1 , end) )
                 self.runningProcesses.append( aProcess ) # and adding them to runningProcesses list
                 self.free_sort()
                 self.remove_entry_time( aProcess )
