@@ -16,7 +16,7 @@ class Process(object):
         self.arrivalTimes = []                          # list of arrival times, in order
         self.exitTimes = []                             # list of exit times, in order
         self.done = False                               # True if last arrival time has occurred (note still needs to exit and be removed)
-
+        self.LL = []                                    # if non-contig, list of memory location blocks 
         i = 0
         for x in processArgs[2:]:                   # List of arrival and exit times
             if i%2 == 0:
@@ -143,6 +143,10 @@ class MainMemorySimulator(object):
                 return ( True, worst_space[0], worst_space[1] )
         return ( False, 0 , 0 )
 
+    def printNonMemory(self):
+        print "enters print non memory"
+        pass
+
     #scans through runnning processes and prints
     def printMemory(self):
         self.memFrames = ""                 #output string
@@ -220,7 +224,10 @@ class MainMemorySimulator(object):
             #check for exiting processes + deallocate if found
             for p in self.processes:
                 if p.exitTimes[0] == self.simTime:
-                    self.deallocate(p)
+                    if alloc_method != "noncontig":
+                        self.deallocate(p)
+                    else:
+                        self.non_deallocate(p)
 
             #check for entering processes + allocate if found
             for p in self.processes:
@@ -231,12 +238,21 @@ class MainMemorySimulator(object):
             #prints at time requested or on every change for quiet_mode
             if quiet_mode and self.change:
                 self.change = False
-                self.printMemory()
+                if alloc_method != "noncontig":
+                    self.printMemory()
+                else:
+                    self.printNonMemory()
             elif self.simTime == self.t:
-                self.printMemory()
+                if alloc_method != "noncontig":
+                    self.printMemory()
+                else:
+                    self.printNonMemory()
             elif self.t > self.lastTime and self.simTime == self.lastTime:
                 print "Program Simulation is about to end, printing memory before exiting"
-                self.printMemory() 
+                if alloc_method != "noncontig":
+                    self.printMemory() 
+                else:
+                    self.printNonMemory()
 
     #defragment memory if free blocks don't allow allocation
     def defragment(self):
@@ -311,6 +327,10 @@ class MainMemorySimulator(object):
 
         self.fix_free_space()
         self.change = True
+
+    def non_deallocate(self, aProcess):
+        print "Enters noncontig Deallocate"
+        pass
 
     #selects the proper algorithm based on command line argument
     def select_n_cal(self, alloc_method, aProcess):
