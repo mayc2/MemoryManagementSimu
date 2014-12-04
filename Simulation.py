@@ -366,9 +366,11 @@ class MainMemorySimulator(object):
         print "Deallocated",aProcess.name + "\n"
         self.runningProcesses.remove( aProcess )
 
+        # print aProcess.LL
         for L in aProcess.LL:
             begin = L[0]
             end = L[1]
+            aProcess.LL.remove(L)
 
             #handle if blcok being freed is next to current free block
             check_before = False
@@ -402,6 +404,8 @@ class MainMemorySimulator(object):
                 self.freeSpace.append( (begin, end) )
             self.fix_free_space()
 
+        # print aProcess.LL
+        # print self.freeSpace
         self.remove_exit_time( aProcess )
         self.change = True
 
@@ -561,34 +565,46 @@ class MainMemorySimulator(object):
 
     #implements Non-Contiguous Memory Allocation Algorithm
     def exec_noncontig(self, aProcess):
-        print "noncontig:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)
+        print "noncontig:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)+"\n"
         
         curSize = 0
+        answer1 = 1599
+        answer2 = 0
         while curSize < aProcess.reqMemFrames:
+            # print "ANSWER1:",answer1,"ANSWER2:",answer2
+
             self.free_sort()
+            # print "FREESPACE BEFORE:",self.freeSpace
             if len(self.freeSpace) > 0:
                 space = self.freeSpace.pop(0)
+                # print "REMOVE:",space
                 begin = space[0]
                 end = space[1]
+                if begin < answer1:
+                    answer1 = begin
                 ssize = space[1] - space[0] + 1
-                curSize += ssize
 
                 #free space is larger than remaining required memory blocks
-                if ssize >= aProcess.reqMemFrames:
-                    tSize = aProcess.reqMemFrames + begin - 1
-                    aProcess.LL.append( (begin, tSize) )
+                if curSize+ssize >= aProcess.reqMemFrames:
+                    tSize = (aProcess.reqMemFrames - curSize) + begin - 1
+                    answer2 += tSize
+                    aProcess.LL.append( (answer1, answer2) )
                     if end > tSize:
                         self.freeSpace.append( (tSize + 1 , end) )
                     self.fix_free_space()
                     self.runningProcesses.append( aProcess ) # and adding them to runningProcesses list
-                    print "Allocated",aProcess.name + "\n"
+                    # print "Allocated",aProcess.name + "\n"
                     self.free_sort()
                     self.remove_entry_time( aProcess )
                 else:
-                    aProcess.LL.append( (begin,end) )
+                    answer2 += end
+                curSize += ssize
             else:
                 print "ERROR: OUT-OF-MEMORY"
                 sys.exit()                
+            # print "current size",curSize,"memfram:",aProcess.reqMemFrames
+        # print "FREESPACE AFTER:",self.freeSpace
+
 
 
 ########################    END CLASS   ###########################################################
