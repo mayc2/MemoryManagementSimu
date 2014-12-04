@@ -54,7 +54,7 @@ class MainMemorySimulator(object):
                         self.freeSpace.append( (tSize + 1 , end) )
                     self.fix_free_space()
                     self.runningProcesses.append(p) # and adding them to runningProcesses list
-                    print "Allocated",p.name
+                    # print "Allocated",p.name
                     self.lastAlloc = p.memLoc[1]
                     self.free_sort()
                     self.remove_entry_time( p )
@@ -175,6 +175,11 @@ class MainMemorySimulator(object):
 
         for m in printList:
             print m
+
+        # for p in self.runningProcesses:
+        #     print "process:",p.name,p.LL
+        # for f in self.freeSpace:
+        #     print "free space:",f
 
         print ""
 
@@ -320,7 +325,7 @@ class MainMemorySimulator(object):
     
     #deallocates a proces from memory
     def deallocate(self, aProcess):
-        print "Deallocated",aProcess.name + "\n"
+        # print "Deallocated",aProcess.name + "\n"
         self.runningProcesses.remove( aProcess )
         
         begin = aProcess.memLoc[0]
@@ -363,14 +368,12 @@ class MainMemorySimulator(object):
         self.change = True
 
     def non_deallocate(self, aProcess):
-        print "Deallocated",aProcess.name + "\n"
+        # print "Deallocated",aProcess.name + "\n"
         self.runningProcesses.remove( aProcess )
-
         # print aProcess.LL
         for L in aProcess.LL:
             begin = L[0]
             end = L[1]
-            aProcess.LL.remove(L)
 
             #handle if blcok being freed is next to current free block
             check_before = False
@@ -404,10 +407,14 @@ class MainMemorySimulator(object):
                 self.freeSpace.append( (begin, end) )
             self.fix_free_space()
 
+        aProcess.LL = []
+
         # print aProcess.LL
         # print self.freeSpace
         self.remove_exit_time( aProcess )
         self.change = True
+        # for f in self.freeSpace:
+            # print "free space:",f
 
     #selects the proper algorithm based on command line argument
     def select_n_cal(self, alloc_method, aProcess):
@@ -463,7 +470,7 @@ class MainMemorySimulator(object):
 
     #implements First-Fit Memory Allocation Algorithm
     def exec_first(self, aProcess):
-        print "first:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)
+        # print "first:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)
 
         n = 0
         while n < 2: 
@@ -475,7 +482,7 @@ class MainMemorySimulator(object):
                     self.freeSpace.append( (tSize + 1 , end) )
                 self.fix_free_space()
                 self.runningProcesses.append( aProcess ) # and adding them to runningProcesses list
-                print "Allocated",aProcess.name
+                # print "Allocated",aProcess.name
                 self.free_sort()
                 self.remove_entry_time( aProcess )
                 n = 2
@@ -488,7 +495,7 @@ class MainMemorySimulator(object):
     
     #implements Best-Fit Memory Allocation Algorithm
     def exec_best(self, aProcess):
-        print "best:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)
+        # print "best:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)
     
         n = 0
         while n < 2: 
@@ -500,7 +507,7 @@ class MainMemorySimulator(object):
                     self.freeSpace.append( (tSize + 1 , end) )
                 self.fix_free_space()
                 self.runningProcesses.append( aProcess ) # and adding them to runningProcesses list
-                print "Allocated",aProcess.name
+                # print "Allocated",aProcess.name
                 self.free_sort()
                 self.remove_entry_time( aProcess )
                 n = 2
@@ -513,7 +520,7 @@ class MainMemorySimulator(object):
 
     #implements Next-Fit Memory Allocation Algorithm
     def exec_next(self, aProcess):
-        print "next:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)
+        # print "next:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)
 
         n = 0
 
@@ -526,7 +533,7 @@ class MainMemorySimulator(object):
                     self.freeSpace.append( (tSize + 1 , end) )
                 self.fix_free_space()
                 self.runningProcesses.append( aProcess ) # and adding them to runningProcesses list
-                print "Allocated",aProcess.name
+                # print "Allocated",aProcess.name
                 self.lastAlloc = aProcess.memLoc[1]
                 self.free_sort()
                 self.remove_entry_time( aProcess )
@@ -540,7 +547,7 @@ class MainMemorySimulator(object):
 
     #implements Worst-Fit Memory Allocation Algorithm
     def exec_worst(self, aProcess):
-        print "worst:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)
+        # print "worst:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)
 
         n = 0
         while n < 2: 
@@ -552,7 +559,7 @@ class MainMemorySimulator(object):
                     self.freeSpace.append( (tSize + 1 , end) )
                 self.fix_free_space()
                 self.runningProcesses.append( aProcess ) # and adding them to runningProcesses list
-                print "Allocated",aProcess.name + "\n"
+                # print "Allocated",aProcess.name + "\n"
                 self.free_sort()
                 self.remove_entry_time( aProcess )
                 n = 2
@@ -565,13 +572,10 @@ class MainMemorySimulator(object):
 
     #implements Non-Contiguous Memory Allocation Algorithm
     def exec_noncontig(self, aProcess):
-        print "noncontig:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)+"\n"
+        # print "noncontig:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)+"\n"
         
         curSize = 0
-        answer1 = 1599
-        answer2 = 0
         while curSize < aProcess.reqMemFrames:
-            # print "ANSWER1:",answer1,"ANSWER2:",answer2
 
             self.free_sort()
             # print "FREESPACE BEFORE:",self.freeSpace
@@ -580,15 +584,12 @@ class MainMemorySimulator(object):
                 # print "REMOVE:",space
                 begin = space[0]
                 end = space[1]
-                if begin < answer1:
-                    answer1 = begin
                 ssize = space[1] - space[0] + 1
 
                 #free space is larger than remaining required memory blocks
                 if curSize+ssize >= aProcess.reqMemFrames:
                     tSize = (aProcess.reqMemFrames - curSize) + begin - 1
-                    answer2 += tSize
-                    aProcess.LL.append( (answer1, answer2) )
+                    aProcess.LL.append( (begin, tSize) )
                     if end > tSize:
                         self.freeSpace.append( (tSize + 1 , end) )
                     self.fix_free_space()
@@ -597,7 +598,7 @@ class MainMemorySimulator(object):
                     self.free_sort()
                     self.remove_entry_time( aProcess )
                 else:
-                    answer2 += end
+                    aProcess.LL.append( (begin,end) )
                 curSize += ssize
             else:
                 print "ERROR: OUT-OF-MEMORY"
