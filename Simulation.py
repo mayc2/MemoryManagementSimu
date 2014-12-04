@@ -143,6 +143,40 @@ class MainMemorySimulator(object):
                 return ( True, worst_space[0], worst_space[1] )
         return ( False, 0 , 0 )
 
+
+    def printNonMemory(self):
+        self.memFrames = ""                 #output string
+        memFrameItr = self.numOpSysProc     # Master index handler for memory representation
+
+        for i in range(0, self.numOpSysProc):   # Adding Operating System Frames to beginning
+            self.memFrames += "#"
+
+        while memFrameItr < self.numMemFrames:
+            p_found = False
+            for p in self.runningProcesses:
+                for l in self.runningProcesses[p].LL:
+                    if memFrameItr >= l[0] and memFrameItr <= l[1]:
+                        self.memFrames += p.name
+                        p_found = True
+            if not p_found:
+                self.memFrames += "."
+            memFrameItr++
+
+        printList = []
+        print "Memory at time %d:" %self.simTime
+        i = 0
+        while i < self.numMemFrames:
+            if i + 79 < self.numMemFrames:
+                printList.append(self.memFrames[i:i + 80])
+            else:
+                printList.append(self.memFrames[i:])
+            i += 80
+
+        for m in printList:
+            print m
+
+        print ""
+
     #scans through runnning processes and prints
     def printMemory(self):
         self.memFrames = ""                 #output string
