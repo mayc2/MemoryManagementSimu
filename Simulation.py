@@ -28,7 +28,7 @@ class Process(object):
 #MEMORY SIMULATION CLASS
 class MainMemorySimulator(object):
     """docstring for MainMemory"""
-    def __init__(self, processList):
+    def __init__(self, processList, alloc_method):
         self.simTime = 0                    # Master Time Handler
         self.lastTime = 0                   # Time that last process exits
         self.processes = processList        # Master List of all Processes
@@ -48,6 +48,8 @@ class MainMemorySimulator(object):
                 if free_check:
                     tSize = p.reqMemFrames + begin - 1
                     p.memLoc = ( begin, tSize )
+                    if alloc_method == "noncontig":
+                        p.LL.append( p.memLoc )
                     if ( end - tSize ) > 0:
                         self.freeSpace.append( (tSize + 1 , end) )
                     self.fix_free_space()
@@ -153,13 +155,13 @@ class MainMemorySimulator(object):
         while memFrameItr < self.numMemFrames:
             p_found = False
             for p in self.runningProcesses:
-                for l in self.runningProcesses[p].LL:
+                for l in p.LL:
                     if memFrameItr >= l[0] and memFrameItr <= l[1]:
                         self.memFrames += p.name
                         p_found = True
             if not p_found:
                 self.memFrames += "."
-            memFrameItr++
+            memFrameItr += 1
 
         printList = []
         print "Memory at time %d:" %self.simTime
@@ -218,11 +220,14 @@ class MainMemorySimulator(object):
     def incrementTime(self):
         self.simTime += 1
 
-    def print_stats(self):
+    def print_stats(self, alloc_method):
         self.processes_sort()
         self.free_sort()
         for p in self.runningProcesses:
-            print "Process",p.name,"located at",p.memLoc,"with size",p.reqMemFrames
+            if alloc_method != "noncontig":
+                print "Process",p.name,"located at",p.memLoc,"with size",p.reqMemFrames
+            else:
+                print "Process",p.name,"located at",p.LL,"with size",p.reqMemFrames
         for space in self.freeSpace:
             print "open space",space
 
@@ -240,7 +245,7 @@ class MainMemorySimulator(object):
                         print "Invalid Input: Enter time past current time of %d" %self.simTime
                         self.t = 0                        
                     elif self.t == "p":
-                        self.print_stats()
+                        self.print_stats(alloc_method)
                         self.t = self.simTime
                     else:
                         self.t = int(self.t)
@@ -358,8 +363,47 @@ class MainMemorySimulator(object):
         self.change = True
 
     def non_deallocate(self, aProcess):
-        print "Enters noncontig Deallocate"
-        pass
+        print "Deallocated",aProcess.name + "\n"
+        self.runningProcesses.remove( aProcess )
+
+        for L in aProcess.LL:
+            begin = L[0]
+            end = L[1]
+
+            #handle if blcok being freed is next to current free block
+            check_before = False
+            check_after = False
+            before_tup = ( 0, 0 )
+            after_tup = ( 0 , 0 )
+            for space in self.freeSpace:
+                #block is after free space
+                if space[0] == ( end + 1 ):
+                    check_after = True
+                    after_tup = space
+                #block is before free space
+                if space[1] == ( begin - 1):
+                    check_before = True
+                    before_tup = space
+            #if between two free blocks
+            if check_before and check_after:
+                self.freeSpace.append( (before_tup[0], after_tup[1]) )
+                self.freeSpace.remove( before_tup )
+                self.freeSpace.remove( after_tup )
+            #if only before a free block
+            elif check_before:
+                self.freeSpace.append( (before_tup[0], end) )
+                self.freeSpace.remove( before_tup )
+            #if only after a free block
+            elif check_after:
+                self.freeSpace.append( (begin,  after_tup[1]) )
+                self.freeSpace.remove( after_tup )
+            #else not next to a free block
+            else:
+                self.freeSpace.append( (begin, end) )
+            self.fix_free_space()
+
+        self.remove_exit_time( aProcess )
+        self.change = True
 
     #selects the proper algorithm based on command line argument
     def select_n_cal(self, alloc_method, aProcess):
@@ -521,6 +565,7 @@ class MainMemorySimulator(object):
         
         curSize = 0
         while curSize < aProcess.reqMemFrames:
+            self.free_sort()
             if len(self.freeSpace) > 0:
                 space = self.freeSpace.pop(0)
                 begin = space[0]
@@ -603,7 +648,7 @@ if __name__ == '__main__':
                 processList.append(Process(line))
 
     #initializing MainMemorySimulator
-    M = MainMemorySimulator(processList)
+    M = MainMemorySimulator(processList, alloc_method)
 
     #Run Iterations
     M.run( quiet_mode, alloc_method )
