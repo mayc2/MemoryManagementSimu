@@ -518,7 +518,32 @@ class MainMemorySimulator(object):
     #implements Non-Contiguous Memory Allocation Algorithm
     def exec_noncontig(self, aProcess):
         print "noncontig:",aProcess.name,"of size",aProcess.reqMemFrames,"gets here at time " + str(self.simTime)
-        pass
+        
+        curSize = 0
+        while curSize < aProcess.reqMemFrames:
+            if len(self.freeSpace) > 0:
+                space = self.freeSpace.pop(0)
+                begin = space[0]
+                end = space[1]
+                ssize = space[1] - space[0] + 1
+                curSize += ssize
+
+                #free space is larger than remaining required memory blocks
+                if ssize >= aProcess.reqMemFrames:
+                    tSize = aProcess.reqMemFrames + begin - 1
+                    aProcess.LL.append( (begin, tSize) )
+                    if end > tSize:
+                        self.freeSpace.append( (tSize + 1 , end) )
+                    self.fix_free_space()
+                    self.runningProcesses.append( aProcess ) # and adding them to runningProcesses list
+                    print "Allocated",aProcess.name + "\n"
+                    self.free_sort()
+                    self.remove_entry_time( aProcess )
+                else:
+                    aProcess.LL.append( (begin,end) )
+            else:
+                print "ERROR: OUT-OF-MEMORY"
+                sys.exit()                
 
 
 ########################    END CLASS   ###########################################################
